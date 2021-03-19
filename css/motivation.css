@@ -1,0 +1,61 @@
+/*table {
+    width: 100%;
+}*/
+.motivation {
+    box-shadow: none;
+}
+.motivation th:nth-child(1){
+    /*background-color: #0074d9;*/
+    /*color: #fff;*/
+    position: absolute;
+    left: 0;
+    width: 200px;
+    /*box-shadow: 0px 1px 2px 1px #d2d2d2;*/
+}
+
+.motivation thead th, 
+.motivation thead td:nth-child(5n+1),
+.motivation tbody th,
+.motivation tbody td:nth-child(5n+1),
+.motivation tfoot th,
+.motivation tfoot td {
+    border-right: 5px solid #dddddd;
+}
+
+.outer {
+    position: relative
+}
+
+.inner {
+    overflow-x: scroll;
+    overflow-y: visible;
+    /*width: 400px;*/
+    margin-left: 212px;
+}
+
+.graph {
+    /*width: 100%;*/
+    margin: auto;
+    margin-top: 10px;
+	margin-bottom: 10px;
+	border: 1px solid #dddddd;
+    border-collapse: collapse;
+    box-shadow: 0px 1px 2px 1px #d2d2d2;
+    background-color: #fff;
+    text-align: center;
+}
+.graph th {
+	font-weight: bold;
+	padding: 5px;
+	background: #efefef;
+	border: 1px solid #dddddd;
+}
+.graph td {
+	border: 1px solid #dddddd;
+    padding: 5px;
+    width: 16px;
+}
+
+.codes td {
+    width: 26px;
+}
