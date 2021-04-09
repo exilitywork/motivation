@@ -11,7 +11,7 @@
  * Если установлен доработанный плагин Панель отчетов, то страница находится здесь - Панель отчетов > Мотивация
 
 # TODO
-* [ ] User profile permission
+* [x] User profile permission
 * [ ] Saving data to DB & access to stored data
 * [ ] Export data to XLSX, PDF
 * [ ] Design improved

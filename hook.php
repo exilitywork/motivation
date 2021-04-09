@@ -40,13 +40,15 @@ function plugin_motivation_install() {
                 `user_id` INT(11) NOT NULL,
                 `year` INT(11) NOT NULL,
                 `month` INT(11) NOT NULL,
-                `line` INT(11) NOT NULL,";
-        for ($i = 1; $i<=31; $i++) {
-            $create_table_query .= "
-                `".$i."` TINYINT(1) NOT NULL,";
-     
-        }
-        $create_table_query .= "`reading_date` DATETIME DEFAULT NULL,
+                `line` INT(11) NOT NULL,
+                `graph` VARCHAR(35) NOT NULL,
+                `plan` BOOL,
+                `penalty` BOOL,
+                `retail` INT(11),
+                `line2koef` FLOAT(2, 1),
+                `notification` TEXT,
+                `oldsmart` INT(11),
+                `newsmart` INT(11),
                 PRIMARY KEY (`id`),
                 KEY (`user_id`)
             ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
