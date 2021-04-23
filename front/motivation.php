@@ -27,7 +27,7 @@
 global $DB;
 include ("../../../inc/includes.php");
 
-//Session::checkRight('entity', READ);
+Session::checkRight('plugin_motivation_graphs', READ);
 
 Html::header("Мотивация");
 /*echo '<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css"/>
@@ -59,9 +59,11 @@ Dropdown::showFromArray("month", Toolbox::getMonthsOfYearArray(), $options_month
 Dropdown::showFromArray("year", $years, $options_year);
 echo "<h4>Загрузка графика работы и кодов к нему</h4>
         График: <input type='file' name='graph_file' accept='.xlsx'>&nbsp;
-        Коды: <input type='file' name='code_file' accept='.xlsx'>&nbsp;
-        <input type='submit' name='import' value=\""._sx('button', 'Загрузить')."\" class='submit'>
-    </div>";
+        Коды: <input type='file' name='code_file' accept='.xlsx'>&nbsp;";
+if (Session::haveRight('plugin_motivation_graphs', UPDATE)) {
+    echo "<input type='submit' name='import' value=\""._sx('button', 'Загрузить')."\" class='submit'>";
+}
+echo "</div>";
 Html::closeForm();
 
 $motivation = new PluginMotivationMotivation();

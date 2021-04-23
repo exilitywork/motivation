@@ -69,7 +69,7 @@ if (!defined("PLUGINFIELDSUPGRADE_CLASS_PATH")) {
 function plugin_version_motivation() {
     return [
       'name' => 'Calculation Motivation for Belwest',
-      'version' => '0.2',
+      'version' => '0.1',
       'author' => 'BELWEST - Kapeshko Oleg',
       'homepage' => '',
       'license' => 'local',
@@ -103,7 +103,7 @@ function plugin_init_motivation() {
         
         Plugin::registerClass('PluginMotivationProfile', ['addtabon' => 'Profile']);
         //Plugin::registerClass('PluginMotivationConfig', ['addtabon' => ['Entity']]);
-        if(Session::haveRight('plugin_motivation_calc', READ)) {
+        if(Session::haveRight('plugin_motivation_calc', READ) && in_array(Session::getLoginUserID(), [21, 22, 1312, 33, 75, 76, 1031, 74, 29, 58])) {
             $PLUGIN_HOOKS["menu_toadd"][PLUGIN_MOTIVATION_NAMESPACE] = array('statistics'  => array('PluginMotivationConfig'));
         }
 

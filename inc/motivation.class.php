@@ -202,6 +202,15 @@ class PluginMotivationMotivation extends CommonDBTM {
                     AND glpi_groups_tickets.tickets_id = glpi_tickets.id
                     AND glpi_tickets.is_deleted = 0
                     AND glpi_tickets.date BETWEEN ".$sql_date), 0, 'total');
+            
+            $total_close = $DB->result($DB->query("
+                SELECT count(*) AS total
+                FROM glpi_groups_tickets, glpi_tickets, glpi_groups
+                WHERE glpi_groups_tickets.groups_id = ".$group_id."
+                    AND glpi_groups_tickets.groups_id = glpi_groups.id
+                    AND glpi_groups_tickets.tickets_id = glpi_tickets.id
+                    AND glpi_tickets.is_deleted = 0
+                    AND glpi_tickets.closedate BETWEEN ".$sql_date), 0, 'total');
 
             $stat_query = $DB->query("
                 SELECT glpi_groups_users.users_id AS id, count(glpi_tickets_users.id) AS count
@@ -241,10 +250,10 @@ class PluginMotivationMotivation extends CommonDBTM {
             ");
 
             $statistics['total'][$day] = $total;
-            $statistics['in_work'][$day] = 0;
+            $statistics['in_work'][$day] = $total_close;
             while ($stat_row = $DB->fetch_assoc($stat_query)) {
                 $statistics['users'][$stat_row['id']][$day]['count'] = $stat_row['count'];
-                $statistics['in_work'][$day] += $stat_row['count'];
+                //$statistics['in_work'][$day] += $stat_row['count'];
                 $statistics['users'][$stat_row['id']]['total']['count'] = isset($statistics['users'][$stat_row['id']]['total']['count']) 
                                                                         ? $statistics['users'][$stat_row['id']]['total']['count'] + $stat_row['count']
                                                                         : $stat_row['count'];
@@ -686,7 +695,11 @@ class PluginMotivationMotivation extends CommonDBTM {
             </thead>
             <tbody>';
         foreach ($this->graphs as $id => $graph) {
-            $line = Dropdown::showFromArray('id'.$id, [0, 1, 2], ['value' => $graph['line'], 'display_emptychoice' => true, 'display' => false]);
+            if (Session::haveRight('plugin_motivation_graphs', UPDATE)) {
+                $line = Dropdown::showFromArray('id'.$id, [0, 1, 2], ['value' => $graph['line'], 'display_emptychoice' => true, 'display' => false]);
+            } else {
+                $line = $graph['line'] == 0 ? '-----' : $graph['line'];
+            }
             echo '
             <tr class="tab_bg_2 center">
                 <td>'.$line.'</td>
@@ -699,7 +712,11 @@ class PluginMotivationMotivation extends CommonDBTM {
         
         echo '<input type="hidden" name="year" value="'.$this->year.'">';
         echo '<input type="hidden" name="month" value="'.$this->month.'">';
-        echo "<div class='center'><input type='submit' name='import' value=\""._sx('button', 'Рассчитать')."\" class='submit'></div>";
+        echo "<div class='center'>";
+        if (Session::haveRight('plugin_motivation_graphs', UPDATE)) {
+            echo "<input type='submit' name='import' value=\""._sx('button', 'Рассчитать')."\" class='submit'>";
+        }
+        echo "</div>";
         Html::closeForm();
     }
 
@@ -791,8 +808,9 @@ class PluginMotivationMotivation extends CommonDBTM {
                     default:
                         $percent = 65;
                 }
+                $total_percent = $percent;
                 if (isset($user['line2koef']) && $user['line2koef'] > 0) {
-                    $percent = $percent * $user['line2koef'];
+                    $total_percent = $percent * $user['line2koef'];
                 }
                 echo '<tr class="center">
                         <th id="'.$user_id.'" style="text-align: left">'.$user['name'].'</th>
@@ -802,7 +820,7 @@ class PluginMotivationMotivation extends CommonDBTM {
                         <td>'.$retail_coef.'</td>
                         <td>'.$total_сoef.'</td>
                         <td><input type="number" min="1" step="0.1" class="line2koef" value="'.$user['line2koef'].'"style="width: 5em;"></td>
-                        <td><input type="hidden" value="'.$percent.'">'.$percent.'</td>
+                        <td><input type="hidden" value="'.$percent.'">'.$total_percent.'</td>
                         <td></td>
                         <td>'.$total_smart.'</td>
                         <td><input type="number" min="0" step="1" class="oldsmart" value="'.$old_smart.'" style="width: 5em;"></td>
@@ -815,150 +833,151 @@ class PluginMotivationMotivation extends CommonDBTM {
         }
         echo '</tbody>
             </table>';
+            if (Session::haveRight('plugin_motivation_calc', UPDATE)) {
+            echo "<div class='center'><a class='vsubmit' onclick='saveCalc()' title=\""._sx('button', 'Сохранить')."\">"._sx('button', 'Сохранить')."</a></div>";
 
-        echo "<div class='center'><a class='vsubmit' onclick='saveCalc()' title=\""._sx('button', 'Сохранить')."\">"._sx('button', 'Сохранить')."</a></div>";
+            echo '<script>
+                // изменение процента выполнения плана розницы
+                $("#retail").on("change", function() {
+                    //console.log($(this).val());
+                    let retail = $(this).val();
 
-        echo '<script>
-            // изменение процента выполнения плана розницы
-            $("#retail").on("change", function() {
-                //console.log($(this).val());
-                let retail = $(this).val();
-
-                //let td = $(this).closest("tr").children("td");
-                switch (true) {
-                    case retail < 80:
-                        retail = 0.09;
-                        break;
-                    case retail >= 80 && retail < 90:
-                        retail = 0.12;
-                        break;
-                    case retail >= 90 && retail < 100:
-                        retail = 0.15;
-                        break;
-                    default:
-                        retail = 0.165;
-                }
-                $("#calc").find("tbody").children("tr").each(function() {
-                    let td = $(this).children("td");
-                    $(td[3]).text(retail);
-                    calcKoef(td);
-                    calcBonus(td);
-                });
-            });
-
-            // отслеживание изменения первых 4 ячеек с select
-            $("select").on("change", function() {
-                if ($(this).closest("table").attr("id") == "calc") {
-                    let td = $(this).closest("tr").children("td");
-                    calcKoef(td);
-                    calcBonus(td);
-                }
-            });
-
-            // отслеживание изменения ячейки Коэф. 2 линии
-            $(".line2koef").on("change", function() {
-                if ($(this).closest("table").attr("id") == "calc") {
-                    calcBonus($(this).closest("tr").children("td"));
-                }
-            });
-
-            // отслеживание изменения ячейки количества SMART заявок с предыдущего месяца
-            $(".oldsmart").on("change", function() {
-                if ($(this).closest("table").attr("id") == "calc") {
-                    let td = $(this).closest("tr").children("td");
-                    let smart = Number($(this).val()) + Number($(td[10]).text());
-                    $(td[8]).text(smart);
-                    if (smart >= 10) {
-                        $(td[11]).text(smart - 10);
-                        $(td[2]).find("select").val(1).change();
-                    } else {
-                        $(td[11]).text(smart);
-                        $(td[2]).find("select").val(0).change();
+                    //let td = $(this).closest("tr").children("td");
+                    switch (true) {
+                        case retail < 80:
+                            retail = 0.09;
+                            break;
+                        case retail >= 80 && retail < 90:
+                            retail = 0.12;
+                            break;
+                        case retail >= 90 && retail < 100:
+                            retail = 0.15;
+                            break;
+                        default:
+                            retail = 0.165;
                     }
-                }
-            });
-
-            // подсчет итогового коэффициента
-            function calcKoef(td) {
-                let sum = Number($(td[3]).text());
-                for (i = 0; i < 3; i++) {
-                    sum = sum + Number($(td[i]).find("select option:selected").text());
-                }
-                $(td[4]).text(Number(sum.toFixed(2)));
-
-                let bonus;
-                let total = Number($(td[4]).text());
-                switch (true) {
-                    case total <= 0.54:
-                        bonus = 10;
-                        break;
-                    case total >= 0.55 && total <= 0.69:
-                        bonus = 20;
-                        break;
-                    case total >= 0.70 && total <= 0.79:
-                        bonus = 30;
-                        break;
-                    case total >= 0.80 && total <= 0.89:
-                        bonus = 40;
-                        break;
-                    case total >= 0.90 && total <= 0.99:
-                        bonus = 50;
-                        break;
-                    default:
-                        bonus = 65;
-                }
-                $(td[6]).html("<input type=\"hidden\" value=\"" + bonus + "\">" + bonus);
-            }
-
-            // вычисление процента премии
-            function calcBonus(td) {
-                let total = $(td[6]).find("input").val();
-                if ($(td[5]).find("input").val() > 0) {
-                    let bonus = total * $(td[5]).find("input").val();
-                    $(td[6]).html("<input type=\"hidden\" value=\"" + total + "\">" + bonus);
-                }
-            }
-
-            // запись изменений в БД через ajax
-            function saveCalc() {
-                $(".preloader_bg, .preloader_content").fadeIn(0);
-                let calc = [];
-                $("#calc").find("tbody").children("tr").each(function() {
-                    let th = $(this).children("th");
-                    let td = $(this).children("td");
-                    calc.push([
-                        $(th[0]).attr("id"), 
-                        $(td[0]).find("select").val(), 
-                        $(td[1]).find("select").val(), 
-                        $(td[5]).find("input").val(), 
-                        $(td[9]).find("input").val(), 
-                        $(td[11]).text(), 
-                        $(td[13]).find("input").val(),
-                        $("#retail").val()
-                    ]);
+                    $("#calc").find("tbody").children("tr").each(function() {
+                        let td = $(this).children("td");
+                        $(td[3]).text(retail);
+                        calcKoef(td);
+                        calcBonus(td);
+                    });
                 });
-                console.log(JSON.stringify(calc));
-                $.ajax({
-                    type: "POST",
-                    url: "../ajax/savedata.php",
-                    data:{
-                        calc : JSON.stringify(calc),
-                        year : $("select[name=\"year\"]").val(),
-                        month : $("select[name=\"month\"]").val()
-                    },
-                    dataType: "json",
-                    success: function(data) {
-                        $(".preloader_bg, .preloader_content").fadeOut(0);
-                        console.log(data);
-                        alert(data.reply);
-                    },
-                    error: function() {
-                        $(".preloader_bg, .preloader_content").fadeOut(0);
-                        alert("Внимание! Ошибка сохранения данных!");
+
+                // отслеживание изменения первых 4 ячеек с select
+                $("select").on("change", function() {
+                    if ($(this).closest("table").attr("id") == "calc") {
+                        let td = $(this).closest("tr").children("td");
+                        calcKoef(td);
+                        calcBonus(td);
                     }
                 });
-            }
-        </script>';
+
+                // отслеживание изменения ячейки Коэф. 2 линии
+                $(".line2koef").on("change", function() {
+                    if ($(this).closest("table").attr("id") == "calc") {
+                        calcBonus($(this).closest("tr").children("td"));
+                    }
+                });
+
+                // отслеживание изменения ячейки количества SMART заявок с предыдущего месяца
+                $(".oldsmart").on("change", function() {
+                    if ($(this).closest("table").attr("id") == "calc") {
+                        let td = $(this).closest("tr").children("td");
+                        let smart = Number($(this).val()) + Number($(td[10]).text());
+                        $(td[8]).text(smart);
+                        if (smart >= 10) {
+                            $(td[11]).text(smart - 10);
+                            $(td[2]).find("select").val(1).change();
+                        } else {
+                            $(td[11]).text(smart);
+                            $(td[2]).find("select").val(0).change();
+                        }
+                    }
+                });
+
+                // подсчет итогового коэффициента
+                function calcKoef(td) {
+                    let sum = Number($(td[3]).text());
+                    for (i = 0; i < 3; i++) {
+                        sum = sum + Number($(td[i]).find("select option:selected").text());
+                    }
+                    $(td[4]).text(Number(sum.toFixed(2)));
+
+                    let bonus;
+                    let total = Number($(td[4]).text());
+                    switch (true) {
+                        case total <= 0.54:
+                            bonus = 10;
+                            break;
+                        case total >= 0.55 && total <= 0.69:
+                            bonus = 20;
+                            break;
+                        case total >= 0.70 && total <= 0.79:
+                            bonus = 30;
+                            break;
+                        case total >= 0.80 && total <= 0.89:
+                            bonus = 40;
+                            break;
+                        case total >= 0.90 && total <= 0.99:
+                            bonus = 50;
+                            break;
+                        default:
+                            bonus = 65;
+                    }
+                    $(td[6]).html("<input type=\"hidden\" value=\"" + bonus + "\">" + bonus);
+                }
+
+                // вычисление процента премии
+                function calcBonus(td) {
+                    let total = $(td[6]).find("input").val();
+                    if ($(td[5]).find("input").val() > 0) {
+                        let bonus = Math.round(total * $(td[5]).find("input").val());
+                        $(td[6]).html("<input type=\"hidden\" value=\"" + total + "\">" + bonus);
+                    }
+                }
+
+                // запись изменений в БД через ajax
+                function saveCalc() {
+                    $(".preloader_bg, .preloader_content").fadeIn(0);
+                    let calc = [];
+                    $("#calc").find("tbody").children("tr").each(function() {
+                        let th = $(this).children("th");
+                        let td = $(this).children("td");
+                        calc.push([
+                            $(th[0]).attr("id"), 
+                            $(td[0]).find("select").val(), 
+                            $(td[1]).find("select").val(), 
+                            $(td[5]).find("input").val(), 
+                            $(td[9]).find("input").val(), 
+                            $(td[11]).text(), 
+                            $(td[13]).find("input").val(),
+                            $("#retail").val()
+                        ]);
+                    });
+                    console.log(JSON.stringify(calc));
+                    $.ajax({
+                        type: "POST",
+                        url: "../ajax/savedata.php",
+                        data:{
+                            calc : JSON.stringify(calc),
+                            year : $("select[name=\"year\"]").val(),
+                            month : $("select[name=\"month\"]").val()
+                        },
+                        dataType: "json",
+                        success: function(data) {
+                            $(".preloader_bg, .preloader_content").fadeOut(0);
+                            console.log(data);
+                            alert(data.reply);
+                        },
+                        error: function() {
+                            $(".preloader_bg, .preloader_content").fadeOut(0);
+                            alert("Внимание! Ошибка сохранения данных!");
+                        }
+                    });
+                }
+            </script>';
+        }
 
         return;
     }
