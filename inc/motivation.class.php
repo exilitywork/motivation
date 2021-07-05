@@ -253,7 +253,6 @@ class PluginMotivationMotivation extends CommonDBTM {
             $statistics['in_work'][$day] = $total_close;
             while ($stat_row = $DB->fetch_assoc($stat_query)) {
                 $statistics['users'][$stat_row['id']][$day]['count'] = $stat_row['count'];
-                //$statistics['in_work'][$day] += $stat_row['count'];
                 $statistics['users'][$stat_row['id']]['total']['count'] = isset($statistics['users'][$stat_row['id']]['total']['count']) 
                                                                         ? $statistics['users'][$stat_row['id']]['total']['count'] + $stat_row['count']
                                                                         : $stat_row['count'];
@@ -265,7 +264,7 @@ class PluginMotivationMotivation extends CommonDBTM {
                 $statistics['users'][$smart_row['id']]['total']['smart_promo'] = isset($statistics['users'][$smart_row['id']]['total']['smart_promo'])
                                                                         ? $statistics['users'][$smart_row['id']]['total']['smart_promo'] + $smart_row['smart_promo']
                                                                         : $smart_row['smart_promo'];
-                $statistics['users'][$smart_row['id']][$day]['smart'] = $smart_row['smart_task'] + $smart_row['smart_promo'];
+                $statistics['users'][$smart_row['id']][$day]['smart'] = $smart_row['smart_task'];
                 $statistics['users'][$smart_row['id']]['total']['smart'] = isset($statistics['users'][$smart_row['id']]['total']['smart']) 
                                                                         ? $statistics['users'][$smart_row['id']]['total']['smart'] + $statistics['users'][$smart_row['id']][$day]['smart']
                                                                         : $statistics['users'][$smart_row['id']][$day]['smart'];
@@ -771,13 +770,8 @@ class PluginMotivationMotivation extends CommonDBTM {
                 <tbody>';
         foreach ($statistics['users'] as $user_id => $user) {
             if(isset($user['name'])) {
-                if (isset($user['total']['smart_task']) && isset($user['total']['smart_promo'])) {
-                    $smart = ($user['total']['smart_promo'] < 10) ? $user['total']['smart_task'] + $user['total']['smart_promo'] : $user['total']['smart_task'];
-                    $smart_promo = $user['total']['smart_promo'];
-                } else {
-                    $smart = 0;
-                    $smart_promo = 0;
-                }
+                $smart = isset($user['total']['smart_task']) ? $user['total']['smart_task'] : 0;
+                $smart_promo = isset($user['total']['smart_promo']) ? $user['total']['smart_promo'] : 0;
                 if (isset($user['plan'])) {
                     $plan_сoef = $user['plan'] ? 0.4 : 0;
                 } else {
@@ -788,7 +782,7 @@ class PluginMotivationMotivation extends CommonDBTM {
                 $total_smart = $smart + $old_smart;
                 $smart_сoef = $total_smart >= 10 ? 0.2 : 0;
                 $new_smart = $total_smart >= 10 ? $total_smart - 10 : $total_smart;
-                $total_сoef = $plan_сoef + 0.25 + $smart_сoef + $retail_coef;
+                $total_сoef = $plan_сoef + ($penalty ? 0.25 : 0) + $smart_сoef + $retail_coef;
                 switch (true) {
                     case $total_сoef <= 0.54:
                         $percent = 10;
