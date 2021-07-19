@@ -102,8 +102,7 @@ function plugin_init_motivation() {
         $PLUGIN_HOOKS['add_javascript'][PLUGIN_MOTIVATION_NAMESPACE][]='lib/Buttons-1.7.0/js/buttons.html5.js';*/
         
         Plugin::registerClass('PluginMotivationProfile', ['addtabon' => 'Profile']);
-        //Plugin::registerClass('PluginMotivationConfig', ['addtabon' => ['Entity']]);
-        if(Session::haveRight('plugin_motivation_calc', READ) && in_array(Session::getLoginUserID(), [21, 22, 1312, 33, 75, 76, 1031, 74, 29, 58])) {
+        if(Session::haveRight('plugin_motivation_calc', READ) && (Group_User::isUserInGroup(Session::getLoginUserID(), 33) || in_array(Session::getLoginUserID(), [22]))) {
             $PLUGIN_HOOKS["menu_toadd"][PLUGIN_MOTIVATION_NAMESPACE] = array('statistics'  => array('PluginMotivationConfig'));
         }
 
