@@ -788,19 +788,19 @@ class PluginMotivationMotivation extends CommonDBTM {
                         $percent = 10;
                         break;
                     case $total_сoef >= 0.55 && $total_сoef <= 0.69:
-                        $percent = 20;
+                        $percent = 15;
                         break;
                     case $total_сoef >= 0.70 && $total_сoef <= 0.79:
-                        $percent = 30;
+                        $percent = 20;
                         break;
                     case $total_сoef >= 0.80 && $total_сoef <= 0.89:
-                        $percent = 40;
+                        $percent = 25;
                         break;
                     case $total_сoef >= 0.90 && $total_сoef <= 0.99:
-                        $percent = 50;
+                        $percent = 30;
                         break;
                     default:
-                        $percent = 65;
+                        $percent = 45;
                 }
                 $total_percent = $percent;
                 if (isset($user['line2koef']) && $user['line2koef'] > 0) {
@@ -905,19 +905,19 @@ class PluginMotivationMotivation extends CommonDBTM {
                             bonus = 10;
                             break;
                         case total >= 0.55 && total <= 0.69:
-                            bonus = 20;
+                            bonus = 15;
                             break;
                         case total >= 0.70 && total <= 0.79:
-                            bonus = 30;
+                            bonus = 20;
                             break;
                         case total >= 0.80 && total <= 0.89:
-                            bonus = 40;
+                            bonus = 25;
                             break;
                         case total >= 0.90 && total <= 0.99:
-                            bonus = 50;
+                            bonus = 30;
                             break;
                         default:
-                            bonus = 65;
+                            bonus = 45;
                     }
                     $(td[6]).html("<input type=\"hidden\" value=\"" + bonus + "\">" + bonus);
                 }
