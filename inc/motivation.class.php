@@ -1016,7 +1016,7 @@ class PluginMotivationMotivation extends CommonDBTM {
                     $user_raws[$user_id] .= '<td>'.(isset($user[$day]['time']) ? $user[$day]['time'] : '').'</td>';
                     $user_raws[$user_id] .= '<td>'.(isset($user[$day]['plan']) ? $user[$day]['plan'] : '').'</td>';
                     $user_raws[$user_id] .= '<td>'.(isset($user[$day]['smart']) && $user[$day]['smart'] > 0 ? '+' : '').'</td>';
-                    $user_raws[$user_id] .= '<td>'.(isset($user[$day]['percent']) ? $user[$day]['percent'] : '').'</td>';
+                    $user_raws[$user_id] .= '<td '.(((isset($user[$day]['percent']) && $user[$day]['percent'] < 100)) ? 'style="background-color: #ffbfbf;"' : '').'>'.(isset($user[$day]['percent']) ? $user[$day]['percent'] : '').'</td>';
                 }
             }
             $in_work_raw .= '<th colspan="5">'.$statistics['in_work'][$day].'</th>';

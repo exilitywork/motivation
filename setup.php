@@ -69,7 +69,7 @@ if (!defined("PLUGINFIELDSUPGRADE_CLASS_PATH")) {
 function plugin_version_motivation() {
     return [
       'name' => 'Calculation Motivation for Belwest',
-      'version' => '0.1',
+      'version' => '0.2',
       'author' => 'BELWEST - Kapeshko Oleg',
       'homepage' => '',
       'license' => 'local',
