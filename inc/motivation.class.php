@@ -365,7 +365,7 @@ class PluginMotivationMotivation extends CommonDBTM {
                     if ($xlsx = SimpleXLSX::parse($file_codes)) {
                         $header_values = $rows = [];
                         foreach ($xlsx->rows() as $key => $raw) {
-                            if ($key > 1) {
+                            if ($key > 0) {
                                 $this->updateCodes(array_merge($input, $raw));
                             }
                         }
